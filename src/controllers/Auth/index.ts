@@ -1,5 +1,7 @@
 import User from '../../models/Users';
 import jwt, { Secret } from 'jsonwebtoken';
+import { UserDocument } from '../../models/Users';
+import { ObjectId } from 'mongoose';
 
 const signJWT = (id: string) => {
     const secretOrPrivateKey: Secret | undefined = process.env.JWT_SECRET;
@@ -38,6 +40,47 @@ const signup = async (req: any, res: any) => {
     }
 }
 
+const login = async (req: any, res: any) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({
+            status: 'failed',
+            message: 'Please provide email and password!'
+        });
+    }
+
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({
+                    status: 'failed',
+                    message: 'Incorrect email or password'
+                });
+        }
+
+        // 2) check if the email and password is valid
+        const user = await User.findOne({ email }).select('+password') as unknown as Document & UserDocument & { _id: ObjectId };
+        if (!user || !(await user.correctPassword(password, user.password.toString()))) {
+            return res.status(400).json({
+                status: 'failed',
+                message: 'Incorrect email or password'
+            });
+        }
+
+        // 3 Send token in the response
+        const token = signJWT(user._id);
+        res.status(200).json({
+            status: 'success',
+            token,
+        });
+    }
+    catch (error: any) {
+        res.status(500).json({ status: 'error', message: error.message ?? 'Failed to sign up' });
+    }
+
+}
+
 export {
-    signup
+    signup,
+    login
 }

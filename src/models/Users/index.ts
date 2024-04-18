@@ -2,11 +2,13 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 const validator = require('validator');
 
-interface UserDocument extends mongoose.Document {
+export interface UserDocument extends mongoose.Document {
     name: String;
     email: String;
     password: String;
     passwordConfirm?: String;
+    // eslint-disable-next-line no-unused-vars
+    correctPassword(candidatePassword: string, userPassword: string): Promise<boolean>;
 }
 
 const userSchema = new mongoose.Schema<UserDocument>({
@@ -17,6 +19,7 @@ const userSchema = new mongoose.Schema<UserDocument>({
     email: {
         type: String,
         required: [true, 'Please provide your email'],
+        unique: true,
         validate: [validator.isEmail, 'Please provide a valid email'],
     },
     password: {
@@ -47,8 +50,16 @@ userSchema.pre<UserDocument>('save', async function(this, next) {
     const hashedPassword = await bcrypt.hash(passwordString, 12);
     this.password = hashedPassword;
 
-    delete this.passwordConfirm;
+    this.passwordConfirm = undefined;
+    next();
 })
+
+userSchema.methods.correctPassword = async function (
+    candidatePassword: string,
+    userPassword: string,
+  ) {
+    return await bcrypt.compare(candidatePassword, userPassword);
+};
 
 const User = mongoose.model<UserDocument>('User', userSchema);
 
