@@ -47,7 +47,6 @@ const userSchema = new mongoose.Schema<UserDocument>({
   role: {
     type: String,
     required: true,
-    select: false,
   },
 });
 

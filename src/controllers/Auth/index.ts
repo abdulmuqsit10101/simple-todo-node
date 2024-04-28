@@ -24,6 +24,7 @@ const signup = async (req: any, res: any) => {
       email: req.body.email,
       password: req.body.password,
       passwordConfirm: req.body.passwordConfirm,
+      role: req.body.role,
     });
 
     const token = signJWT(newUser._id.toString());
@@ -122,17 +123,16 @@ const protect = async (req: any, res: any, next: any) => {
   }
 
   // @ts-ignore
-  req.userId = decoded.id;
+  req.user = user;
 
   next();
 };
 
 const authRole = async (req: any, res: any, next: any) => {
-  const user = await User.findById(req.userId);
-  if (user?.role !== 'admin') {
+  if (req.user.role !== 'admin') {
     return res.status(404).json({
       status: 'Failed',
-      message: 'Not Allowed!',
+      message: 'Not Allowed! Access Denined!',
     });
   }
 
