@@ -127,4 +127,16 @@ const protect = async (req: any, res: any, next: any) => {
   next();
 };
 
-export { login, protect, signup };
+const authRole = async (req: any, res: any, next: any) => {
+  const user = await User.findById(req.userId);
+  if (user?.role !== 'admin') {
+    return res.status(404).json({
+      status: 'Failed',
+      message: 'Not Allowed!',
+    });
+  }
+
+  next();
+};
+
+export { authRole, login, protect, signup };
